@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>   <!-- NotifyIcon for the tray -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+    <AssemblyName>ScreenRecorder</AssemblyName>
+    <Authors>Rahul Patel</Authors>
+    <Copyright>Developed by Rahul Patel</Copyright>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ScreenRecorder.Windows.Core/ScreenRecorder.Windows.Core.csproj" />
+    <ProjectReference Include="../PolishEngine/PolishEngine.csproj" />
+  </ItemGroup>
+</Project>

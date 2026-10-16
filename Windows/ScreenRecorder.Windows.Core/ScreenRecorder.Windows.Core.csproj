@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- SDK 22000 (Windows 11) for IsBorderRequired; runs on 19041+ with an
+         ApiInformation guard around the 11-only members. -->
+    <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Authors>Rahul Patel</Authors>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- WASAPI loopback (system audio) and microphone capture. -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PolishEngine/PolishEngine.csproj" />
+  </ItemGroup>
+</Project>

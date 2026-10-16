@@ -1,0 +1,25 @@
+# not part of Dolly
+rea-main/
+rea-main.zip
+ghidra/
+.claude/
+.DS_Store
+
+# macOS app
+ScreenRecorder/.build/
+ScreenRecorder/build.noindex/
+ScreenRecorder/dist/
+ScreenRecorder/Icon/makeicon
+ScreenRecorder/Icon/AppIcon.iconset/
+
+# Windows
+Windows/**/bin/
+Windows/**/obj/
+Windows/dist/
+Windows/.vs/
+
+# website
+website/node_modules/
+website/.next/
+website/.vercel/
+website/out/

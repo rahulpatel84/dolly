@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #F3F4F8; --fg: #1E2335; --fg-2: #6A7085; --card: #FFFFFF; --line: #D9DCE6;
+  --accent: #F23A3D; --accent-ink: #FFFFFF; --hero: #1C2138; --hero-fg: #FFFFFF; --hero-muted: #A9B0C7;
+  --code: #E9EBF2; --code-fg: #2B3045; --good: #1E8E4C; --partial: #B7791F;
+}
+.dark {
+  --bg: #14182A; --fg: #EDEFF6; --fg-2: #A9B0C7; --card: #1C2138; --line: #2F3650;
+  --hero: #0F1222; --hero-muted: #9AA2BC; --code: #242A42; --code-fg: #DDE1EE; --good: #5FD38D; --partial: #E7B35A;
+}
+
+@theme inline {
+  --color-bg: var(--bg); --color-fg: var(--fg); --color-fg-2: var(--fg-2); --color-card: var(--card); --color-line: var(--line);
+  --color-accent: var(--accent); --color-accent-ink: var(--accent-ink); --color-hero: var(--hero); --color-hero-fg: var(--hero-fg);
+  --color-hero-muted: var(--hero-muted); --color-code: var(--code); --color-code-fg: var(--code-fg); --color-good: var(--good); --color-partial: var(--partial);
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; letter-spacing: -0.01em; }
+img { height: auto; max-width: 100%; display: block; }
+kbd { font-family: var(--font-mono); font-size: .82em; background: var(--code); color: var(--code-fg); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; display: inline-block; margin: 1px 0; }
+code { font-family: var(--font-mono); font-size: .9em; background: var(--code); color: var(--code-fg); padding: 1px 5px; border-radius: 4px; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PolishEngine.Tests/PolishEngine.Tests.csproj" />
+  <Project Path="PolishEngine/PolishEngine.csproj" />
+  <Project Path="ScreenRecorder.Windows.Core/ScreenRecorder.Windows.Core.csproj" />
+  <Project Path="ScreenRecorder.Windows/ScreenRecorder.Windows.csproj" />
+</Solution>
