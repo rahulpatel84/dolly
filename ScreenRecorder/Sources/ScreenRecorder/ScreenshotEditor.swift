@@ -32,6 +32,21 @@ enum AnnotationKind: String, CaseIterable, Identifiable {
         }
     }
     var label: String { rawValue.capitalized }
+    /// One line shown while hovering the tool and while it is selected.
+    var hint: String {
+        switch self {
+        case .picker: return "Colour picker — click any pixel to copy its hex value"
+        case .arrow: return "Arrow — drag from tail to head; style and width below"
+        case .rect: return "Rectangle — drag to outline an area"
+        case .ellipse: return "Ellipse — drag to circle something"
+        case .line: return "Line — drag to draw a straight line"
+        case .highlight: return "Highlighter — drag a translucent band over text"
+        case .blur: return "Blur — drag over anything sensitive to pixelate it"
+        case .text: return "Text — click to place a label, then type"
+        case .number: return "Numbered step — click to drop the next badge"
+        case .crop: return "Crop — drag the area to keep; Done applies it"
+        }
+    }
     var key: KeyEquivalent {
         switch self {
         case .picker: return "p"
@@ -99,6 +114,13 @@ final class ScreenshotEditorModel: ObservableObject {
     @Published var screenScale: CGFloat = NSScreen.main?.backingScaleFactor ?? 2
     @Published var pickedHex: String?
     @Published var busy: String?
+    @Published var style = FrameStyle()
+    @Published var exportFormat: ImageFormat = .png
+    @Published var exportQuality: Double = 0.85
+    @Published var showExport = false
+    @Published var showStyle = false
+    /// Set while the pointer is over a toolbar control; shown in the hint line.
+    @Published var hoverHint: String?
     /// Screen points per image pixel for the current window size. The stroke
     /// slider is in screen points; annotations store image pixels, so a 6 pt
     /// arrow is 6 pt on screen AND the equivalent thickness in the export,
@@ -123,7 +145,10 @@ final class ScreenshotEditorModel: ObservableObject {
         pixelSize = CGSize(width: rep?.pixelsWide ?? Int(image.size.width),
                            height: rep?.pixelsHigh ?? Int(image.size.height))
         cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        if let cg = cgImage, let small = Self.downscale(cg, maxWidth: 2560) {
+        // Display copy: only shrink what is larger than a 6K-class screen can
+        // show. Anything smaller is displayed from the original so the preview
+        // is pixel-sharp on Retina; the previous 2560 px cap looked soft.
+        if let cg = cgImage, cg.width > 4096, let small = Self.downscale(cg, maxWidth: 4096) {
             displayImage = NSImage(cgImage: small, size: NSSize(width: small.width, height: small.height))
         } else {
             displayImage = image
@@ -210,7 +235,8 @@ final class ScreenshotEditorModel: ObservableObject {
         if annotations.contains(where: { $0.kind == .blur }), pixelatedCG == nil {
             pixelatedCG = Self.pixelate(cg, scale: max(8, pixelSize.width / 160))
         }
-        guard let out = AnnotationRenderer.render(base: cg, pixelated: pixelatedCG, annotations: annotations, crop: crop) else { return nil }
+        guard var out = AnnotationRenderer.render(base: cg, pixelated: pixelatedCG, annotations: annotations, crop: crop) else { return nil }
+        if style.isActive, let decorated = Decorator.decorate(out, style: style) { out = decorated }
         return NSImage(cgImage: out, size: NSSize(width: out.width, height: out.height))
     }
 
@@ -272,6 +298,38 @@ final class ScreenshotEditorModel: ObservableObject {
         guard FastImage.writePNG(cg, to: url) else { return nil }
         message = "Saved \(url.lastPathComponent)"
         return url
+    }
+
+    /// Export in any format via a save panel; quality applies to lossy ones.
+    func exportAs(_ format: ImageFormat, quality: Double) {
+        guard let out = render(), let cg = out.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [format.utType]
+        let base = sourceURL?.deletingPathExtension().lastPathComponent ?? "Screenshot"
+        panel.nameFieldStringValue = "\(base).\(format.ext)"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        busy = "Exporting…"
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let data = ImageEncoder.encode(cg, format: format, quality: quality)
+            let ok = data.map { (try? $0.write(to: url, options: .atomic)) != nil } ?? false
+            await MainActor.run {
+                self?.busy = nil
+                self?.message = ok ? "Exported \(url.lastPathComponent) · \(ByteCountFormatter.string(fromByteCount: Int64(data?.count ?? 0), countStyle: .file))" : "Export failed"
+                if ok { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            }
+        }
+    }
+
+    /// Size the current render would be in `format` at `quality` — for the
+    /// compression slider. Estimated on a ≤1600 px copy and scaled by area.
+    func estimateSize(format: ImageFormat, quality: Double) async -> Int? {
+        guard let out = render(), let full = out.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return await Task.detached(priority: .utility) { () -> Int? in
+            let sample = FastImage.downscale(full, maxWidth: 1600) ?? full
+            guard let d = ImageEncoder.encode(sample, format: format, quality: quality) else { return nil }
+            let ratio = Double(full.width * full.height) / Double(sample.width * sample.height)
+            return Int(Double(d.count) * (format == .pdf || format == .tiff ? ratio : pow(ratio, 0.9)))
+        }.value
     }
 
     /// Renders once and hands the file to the system share picker.
@@ -511,6 +569,7 @@ struct ScreenshotEditorView: View {
                 ScreenScaleReader { s in if abs(s - model.screenScale) > 0.01 { model.screenScale = s } }.frame(width: 0, height: 0)
                 ZStack {
                     Color(nsColor: .underPageBackgroundColor)
+                    DecoratedPreview(style: model.style, imageSize: fit) {
                     AnnotationCanvas(model: model)
                         .frame(width: fit.width, height: fit.height)
                         .gesture(DragGesture(minimumDistance: 0)
@@ -521,7 +580,7 @@ struct ScreenshotEditorView: View {
                                 } else { model.update(to: p) }
                             }
                             .onEnded { _ in model.commit() })
-                        .shadow(radius: 8)
+                    }
                 }
                 .frame(minWidth: geo.size.width, minHeight: geo.size.height)
                 }
@@ -581,24 +640,30 @@ struct ScreenshotEditorView: View {
         VStack(spacing: 6) {
             HStack(spacing: 8) {
                 // File actions
-                Button { model.copyToClipboard() } label: { Image(systemName: "doc.on.doc") }.help("Copy (⇧⌘C)").keyboardShortcut("c", modifiers: [.command, .shift])
+                Button { model.copyToClipboard() } label: { Image(systemName: "doc.on.doc") }.help("Copy (⇧⌘C)").onHover { model.hoverHint = $0 ? "Copy the finished image to the clipboard (⇧⌘C)" : nil }.keyboardShortcut("c", modifiers: [.command, .shift])
                 Menu { Button("Save as New") { _ = model.save(overwrite: false) }
                        Button("Overwrite Original") { _ = model.save(overwrite: true) }.disabled(model.sourceURL == nil) }
-                    label: { Image(systemName: "square.and.arrow.down") }.frame(width: 44).help("Save")
-                Button { PinnedScreenshots.shared.pin(model.render() ?? model.image) } label: { Image(systemName: "pin") }.help("Pin on screen")
+                    label: { Image(systemName: "square.and.arrow.down") }.frame(width: 44).help("Save").onHover { model.hoverHint = $0 ? "Save — Save as New, or Overwrite Original" : nil }
+                Button { PinnedScreenshots.shared.pin(model.render() ?? model.image) } label: { Image(systemName: "pin") }.help("Pin on screen").onHover { model.hoverHint = $0 ? "Pin a floating copy on screen, above other windows" : nil }
+                Button { model.showStyle.toggle() } label: { Image(systemName: "paintpalette") }
+                    .tint(model.style.isActive ? .accentColor : nil).help("Background and frame style").onHover { model.hoverHint = $0 ? "Style — gradient background, padding, corners, shadow, macOS window frame" : nil }
+                    .popover(isPresented: $model.showStyle, arrowEdge: .bottom) { StylePopover(model: model) }
+                Button { model.showExport = true } label: { Image(systemName: "arrow.down.doc") }.help("Export as PNG, JPEG, HEIC, WebP, TIFF or PDF").onHover { model.hoverHint = $0 ? "Export — choose PNG, JPEG, HEIC, WebP, TIFF or PDF and a compression level" : nil }
+                    .popover(isPresented: $model.showExport, arrowEdge: .bottom) { ExportPopover(model: model) }
                 ShareButton(model: model)
                 Divider().frame(height: 18)
                 // Tools
                 ForEach(AnnotationKind.allCases) { kind in
                     Button { model.tool = kind } label: { Image(systemName: kind.symbol).frame(width: 20, height: 18) }
                         .buttonStyle(.bordered).tint(model.tool == kind ? .accentColor : nil)
-                        .help("\(kind.label) (\(String(kind.key.character)))")
+                        .help("\(kind.hint) · key \(String(kind.key.character).uppercased())")
+                        .onHover { model.hoverHint = $0 ? "\(kind.hint) · key \(String(kind.key.character).uppercased())" : nil }
                         .keyboardShortcut(kind.key, modifiers: [])
                 }
                 Divider().frame(height: 18)
-                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.keyboardShortcut("z", modifiers: [.command]).help("Undo")
-                Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }.keyboardShortcut("z", modifiers: [.command, .shift]).help("Redo")
-                Button("Copy Text") { model.copyText() }.help("OCR: recognise and copy all text")
+                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.keyboardShortcut("z", modifiers: [.command]).help("Undo").onHover { model.hoverHint = $0 ? "Undo (⌘Z)" : nil }
+                Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }.keyboardShortcut("z", modifiers: [.command, .shift]).help("Redo").onHover { model.hoverHint = $0 ? "Redo (⇧⌘Z)" : nil }
+                Button("Copy Text") { model.copyText() }.help("OCR: recognise and copy all text").onHover { model.hoverHint = $0 ? "Copy Text — recognise every word in the image (OCR) and copy it" : nil }
                 Spacer()
                 // Readouts
                 HStack(spacing: 14) {
@@ -616,7 +681,7 @@ struct ScreenshotEditorView: View {
                         Text("Image size").font(.system(size: 9)).foregroundStyle(.secondary)
                     }
                     HStack(spacing: 2) {
-                        Button { model.zoomOut() } label: { Image(systemName: "minus.magnifyingglass") }.keyboardShortcut("-", modifiers: [.command]).help("Zoom out (⌘−)")
+                        Button { model.zoomOut() } label: { Image(systemName: "minus.magnifyingglass") }.keyboardShortcut("-", modifiers: [.command]).help("Zoom out (⌘−)").onHover { model.hoverHint = $0 ? "Zoom out (⌘−)" : nil }
                         Menu {
                             Button("Fit to window") { model.zoomFit() }.keyboardShortcut("0", modifiers: [.command])
                             Button("50%") { model.zoom = 0.5 }
@@ -629,12 +694,12 @@ struct ScreenshotEditorView: View {
                                 Text(model.zoom == nil ? "Fit" : "Zoom").font(.system(size: 9)).foregroundStyle(.secondary)
                             }
                         }.menuStyle(.borderlessButton).frame(width: 52)
-                        Button { model.zoomIn() } label: { Image(systemName: "plus.magnifyingglass") }.keyboardShortcut("=", modifiers: [.command]).help("Zoom in (⌘+)")
+                        Button { model.zoomIn() } label: { Image(systemName: "plus.magnifyingglass") }.keyboardShortcut("=", modifiers: [.command]).help("Zoom in (⌘+)").onHover { model.hoverHint = $0 ? "Zoom in (⌘+) · click the percentage for Fit / 100%" : nil }
                     }
                 }
                 if let b = model.busy { ProgressView().controlSize(.mini); Text(b).font(.system(size: 10)).foregroundStyle(.secondary) }
                 Button("Done") { model.finish(then: onClose) }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
-                    .disabled(model.busy != nil).help("Save, copy to clipboard, close (⏎)")
+                    .disabled(model.busy != nil).help("Save, copy to clipboard, close (⏎)").onHover { model.hoverHint = $0 ? "Done — save, copy to clipboard and close (⏎)" : nil }
             }
             // Second row: style for the current tool.
             HStack(spacing: 10) {
@@ -647,16 +712,16 @@ struct ScreenshotEditorView: View {
                 }
                 Divider().frame(height: 16)
                 Image(systemName: "lineweight").foregroundStyle(.secondary)
-                Slider(value: $model.width, in: 1...14).frame(width: 110).help("Stroke width")
+                Slider(value: $model.width, in: 1...14).frame(width: 110).help("Stroke width").onHover { model.hoverHint = $0 ? "Stroke width (also keys 1–9)" : nil }
                 if model.tool == .arrow || model.tool == .line {
                     Divider().frame(height: 16)
                     Picker("", selection: $model.arrowStyle) {
                         ForEach(ArrowStyle.allCases) { st in Image(systemName: st.symbol).tag(st) }
-                    }.pickerStyle(.segmented).frame(width: 120).help("Arrow style")
+                    }.pickerStyle(.segmented).frame(width: 120).help("Arrow style").onHover { model.hoverHint = $0 ? "Arrow style — single, double, or plain line" : nil }
                 }
                 Spacer()
                 if model.preparingBlur { ProgressView().controlSize(.mini); Text("Preparing blur…").font(.system(size: 10)).foregroundStyle(.secondary) }
-                Text(hint).font(.system(size: 10)).foregroundStyle(.tertiary)
+                Text(hint).font(.system(size: 10)).foregroundStyle(model.hoverHint == nil ? .tertiary : .secondary).lineLimit(1)
             }
         }
         .controlSize(.small)
@@ -664,13 +729,121 @@ struct ScreenshotEditorView: View {
     }
 
     private var hint: String {
-        switch model.tool {
-        case .picker: return "Click a pixel to copy its colour"
-        case .text: return "Click to place text"
-        case .number: return "Click to drop the next number"
-        case .crop: return "Drag the area to keep; Done applies it"
-        case .blur: return "Drag over anything sensitive"
-        default: return "Drag to draw · 1–14 stroke · keys: " + AnnotationKind.allCases.map { String($0.key.character).uppercased() }.joined(separator: " ")
+        if let h = model.hoverHint { return h }
+        return model.tool.hint + " · keys: " + AnnotationKind.allCases.map { String($0.key.character).uppercased() }.joined(separator: " ")
+    }
+}
+
+/// Live decoration around the editing canvas: same geometry as Decorator.
+struct DecoratedPreview<Content: View>: View {
+    let style: FrameStyle
+    let imageSize: CGSize
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if style.isActive, let stops = style.background.colors {
+            let pad = imageSize.width * style.padding
+            let bar = style.titleBarHeight(for: imageSize.width) * (imageSize.width / max(1, imageSize.width))
+            let radius = min(imageSize.width, imageSize.height) * style.cornerRadius
+            ZStack {
+                LinearGradient(colors: [Color(cgColor: stops.0), Color(cgColor: stops.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                VStack(spacing: 0) {
+                    if style.macWindow {
+                        ZStack {
+                            Color(white: 0.91)
+                            HStack(spacing: bar * 0.3) {
+                                Circle().fill(Color(red: 0.99, green: 0.38, blue: 0.36))
+                                Circle().fill(Color(red: 0.99, green: 0.74, blue: 0.18))
+                                Circle().fill(Color(red: 0.16, green: 0.78, blue: 0.26))
+                            }
+                            .frame(height: bar * 0.42).padding(.leading, bar * 0.5).frame(maxWidth: .infinity, alignment: .leading)
+                            if !style.title.isEmpty { Text(style.title).font(.system(size: bar * 0.42, weight: .medium)).foregroundStyle(Color(white: 0.25)) }
+                        }
+                        .frame(width: imageSize.width, height: bar)
+                    }
+                    content()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+                .shadow(color: .black.opacity(style.shadow ? 0.45 : 0), radius: imageSize.width * 0.03, y: imageSize.width * 0.012)
+                .padding(pad)
+            }
+            .fixedSize()
+        } else {
+            content().shadow(radius: 8)
+        }
+    }
+}
+
+struct StylePopover: View {
+    @ObservedObject var model: ScreenshotEditorModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Background").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                ForEach(FrameStyle.Background.allCases) { bg in
+                    Button { model.style.background = bg } label: {
+                        ZStack {
+                            if let c = bg.colors {
+                                LinearGradient(colors: [Color(cgColor: c.0), Color(cgColor: c.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            } else {
+                                Image(systemName: "slash.circle").foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(width: 34, height: 34).clipShape(RoundedRectangle(cornerRadius: 7))
+                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(model.style.background == bg ? Color.accentColor : .primary.opacity(0.15), lineWidth: 2))
+                    }.buttonStyle(.plain).help(bg.label)
+                }
+            }
+            Group {
+                HStack { Text("Padding").frame(width: 70, alignment: .leading); Slider(value: $model.style.padding, in: 0.02...0.2) }
+                HStack { Text("Corners").frame(width: 70, alignment: .leading); Slider(value: $model.style.cornerRadius, in: 0...0.06) }
+                Toggle("Shadow", isOn: $model.style.shadow)
+                Toggle("macOS window frame", isOn: $model.style.macWindow)
+                if model.style.macWindow { TextField("Window title (optional)", text: $model.style.title) }
+            }
+            .disabled(!model.style.isActive)
+            .font(.system(size: 12))
+            Text("Applied to Copy, Save, Share and Export. Annotations stay inside the image.")
+                .font(.system(size: 10)).foregroundStyle(.tertiary)
+        }
+        .padding(14).frame(width: 340)
+    }
+}
+
+struct ExportPopover: View {
+    @ObservedObject var model: ScreenshotEditorModel
+    @State private var estimate: Int?
+    @State private var estimating = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Export").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+            Picker("", selection: $model.exportFormat) {
+                ForEach(ImageFormat.available) { f in Text(f.label).tag(f) }
+            }.pickerStyle(.segmented).labelsHidden()
+            if model.exportFormat.isLossy {
+                HStack {
+                    Text("Quality").frame(width: 60, alignment: .leading)
+                    Slider(value: $model.exportQuality, in: 0.3...1.0)
+                    Text("\(Int(model.exportQuality * 100))%").monospacedDigit().frame(width: 40, alignment: .trailing)
+                }.font(.system(size: 12))
+            }
+            HStack {
+                Text(estimating ? "Estimating…" : estimate.map { "≈ " + ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file) } ?? "")
+                    .font(.system(size: 11)).foregroundStyle(.secondary).monospacedDigit()
+                Spacer()
+                Button("Export…") { model.exportAs(model.exportFormat, quality: model.exportQuality); model.showExport = false }
+                    .buttonStyle(.borderedProminent).controlSize(.small)
+            }
+            Text(model.exportFormat == .pdf ? "A single-page PDF at the image's pixel size." :
+                 model.exportFormat.isLossy ? "Lower quality = smaller file. HEIC and WebP are roughly half the size of JPEG at the same quality." :
+                 "Lossless.").font(.system(size: 10)).foregroundStyle(.tertiary)
+        }
+        .padding(14).frame(width: 360)
+        .task(id: "\(model.exportFormat.rawValue)-\(Int(model.exportQuality * 20))") {
+            estimating = true
+            estimate = await model.estimateSize(format: model.exportFormat, quality: model.exportQuality)
+            estimating = false
         }
     }
 }

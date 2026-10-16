@@ -212,7 +212,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         // Help
         let help = NSMenu(title: "Help")
+        help.addItem(item("Dolly User Guide", #selector(openUserGuide)))
         help.addItem(item("Install Guide", #selector(openInstallGuide)))
+        help.addItem(item("Dolly Website", #selector(openWebsite)))
         help.addItem(item("Grant Screen Recording Permission…", #selector(fixPermission)))
         let helpItem = NSMenuItem(title: "Help", action: nil, keyEquivalent: ""); helpItem.submenu = help
         main.addItem(helpItem)
@@ -221,11 +223,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.mainMenu = main
     }
 
+    @objc private func openUserGuide() {
+        if let url = Bundle.main.url(forResource: "User Guide", withExtension: "md") {
+            NSWorkspace.shared.open(url)
+        } else {
+            NSWorkspace.shared.open(URL(string: "https://github.com/rahulpatel84/dolly/blob/master/ScreenRecorder/GUIDE.md")!)
+        }
+    }
+
+    @objc private func openWebsite() { NSWorkspace.shared.open(URL(string: "https://screen-recorder-site.vercel.app")!) }
+
     @objc private func openInstallGuide() {
         if let url = Bundle.main.url(forResource: "Install Guide", withExtension: "md") {
             NSWorkspace.shared.open(url)
         } else {
-            NSWorkspace.shared.open(URL(string: "https://github.com/")!)
+            NSWorkspace.shared.open(URL(string: "https://github.com/rahulpatel84/dolly#install")!)
         }
     }
 

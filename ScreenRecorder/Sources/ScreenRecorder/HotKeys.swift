@@ -23,14 +23,28 @@ final class HotKeys {
         case recordLastArea = 8
     }
 
+    /// The app's live instance, so Settings can pause it while a field is
+    /// waiting for a key press (a registered combo never reaches NSEvent).
+    static weak var active: HotKeys?
     private var refs: [EventHotKeyRef?] = []
     private(set) var registered: [Action: Bool] = [:]
+    private var suspended = false
+
+    /// Unregister everything so the next key press reaches the app normally.
+    func suspend() {
+        suspended = true
+        for ref in refs { if let ref { UnregisterEventHotKey(ref) } }
+        refs.removeAll()
+    }
+
+    func resume() { suspended = false; registerAll() }
     private var handler: EventHandlerRef?
     private var callback: ((Action) -> Void)?
 
     /// ⌃⌘R toggles recording, ⌃⌘S takes a screenshot, ⌃⌘P pauses/resumes.
     func register(_ callback: @escaping (Action) -> Void) {
         self.callback = callback
+        HotKeys.active = self
 
         var spec = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
@@ -60,6 +74,7 @@ final class HotKeys {
 
     /// (Re)registers every shortcut from Settings.
     func registerAll() {
+        guard !suspended else { return }
         for ref in refs { if let ref { UnregisterEventHotKey(ref) } }
         refs.removeAll()
         let s = AppSettings.shared

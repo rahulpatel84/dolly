@@ -4,7 +4,7 @@ Developed by Rahul Patel · macOS 14 Sonoma or later · Apple Silicon and Intel
 
 ## 1. Install
 
-1. Open `Dolly-0.2.0.dmg`.
+1. Open `Dolly-0.2.1.dmg`.
 2. Drag **ScreenRecorder** onto the **Applications** shortcut in the window.
 3. Eject the disk image.
 4. Open **Screen Recorder** from Applications, Spotlight, or Launchpad.

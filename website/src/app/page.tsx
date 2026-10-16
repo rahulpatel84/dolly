@@ -64,7 +64,7 @@ export default function Home() {
               <Image src="/assets/icon.png" alt="" width={30} height={30} className="rounded-[7px]" />Dolly
             </a>
             <ul className="hidden gap-5 text-[15px] text-hero-muted md:flex">
-              {[["#features", "Features"], ["#how", "How it works"], ["#editor", "Screenshots"], ["#compare", "Compare"], ["#install", "Install"], ["https://github.com/rahulpatel84/dolly", "GitHub"]].map(([h, t]) => (
+              {[["#features", "Features"], ["#how", "How it works"], ["#editor", "Screenshots"], ["#compare", "Compare"], ["#install", "Install"], ["/guide", "Guide"], ["https://github.com/rahulpatel84/dolly", "GitHub"]].map(([h, t]) => (
                 <li key={h}><a href={h} className="hover:text-hero-fg">{t}</a></li>
               ))}
             </ul>
@@ -76,7 +76,7 @@ export default function Home() {
               <h1 className="mt-3 text-[clamp(38px,5.6vw,66px)] font-bold leading-[1.02]">Record clean.<br />Polish <em className="not-italic text-accent">after.</em></h1>
               <p className="mt-4 max-w-[34em] text-[19px] text-hero-muted">The screen recorder that follows you. Dolly keeps your cursor telemetry beside the video, then zooms, frames and highlights clicks afterwards — so nothing is ever burned into the pixels, and any recording can be re-polished.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.0/Dolly-0.2.0.dmg" className="rounded-lg bg-accent px-[18px] py-3 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-accent">Download for Mac · 0.2.0</a>
+                <a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.1/Dolly-0.2.1.dmg" className="rounded-lg bg-accent px-[18px] py-3 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-accent">Download for Mac · 0.2.1</a>
                 <a href="#how" className="rounded-lg border border-current px-[18px] py-3 font-semibold">See how it works</a>
               </div>
               <div className="mt-4 flex flex-wrap gap-4 font-mono text-[12.5px] text-hero-muted">
@@ -164,14 +164,14 @@ export default function Home() {
           <SectionHead title="Install in a minute" lede="Signed locally rather than notarised by Apple, so the first launch needs one extra click. Everything runs on your Mac; nothing is uploaded." />
           <div className="grid gap-7 md:grid-cols-2">
             <ol className="grid list-decimal gap-3 pl-5 text-[16.5px]">
-              <li><strong><a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.0/Dolly-0.2.0.dmg" className="underline decoration-accent underline-offset-2">Download Dolly-0.2.0.dmg</a></strong> (1.3 MB), open it, and drag <strong>Dolly</strong> onto the Applications shortcut. If you launch it from Downloads instead, it offers to move itself.</li>
+              <li><strong><a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.1/Dolly-0.2.1.dmg" className="underline decoration-accent underline-offset-2">Download Dolly-0.2.1.dmg</a></strong> (1.3 MB), open it, and drag <strong>Dolly</strong> onto the Applications shortcut. If you launch it from Downloads instead, it offers to move itself.</li>
               <li><strong>First launch:</strong> right-click the app → <strong>Open</strong> → Open. Once.</li>
               <li><strong>Grant Screen Recording</strong> in System Settings → Privacy &amp; Security, then <strong>quit and reopen the app</strong> — macOS does not apply the grant to a running process.</li>
               <li>Press <kbd>⌃⌘R</kbd> to record, <kbd>⌃⌘S</kbd> for a screenshot, <kbd>⌘R</kbd> for the Recordings window.</li>
             </ol>
             <div>
               <div className="rounded-r-lg border-l-[3px] border-accent bg-card px-4 py-3 text-[15.5px] text-fg-2">Recordings and screenshots go to <code>~/Movies/Screen Recordings</code>. Uninstall by dragging the app to the Trash; your files stay.</div>
-              <p className="mt-4 text-[15.5px] text-fg-2">Source and releases are on <a href="https://github.com/rahulpatel84/dolly" className="underline decoration-accent underline-offset-2">GitHub</a>. Build it yourself with <code>build.sh --release</code>; the Install Guide is included inside the image.</p>
+              <p className="mt-4 text-[15.5px] text-fg-2">Source and releases are on <a href="https://github.com/rahulpatel84/dolly" className="underline decoration-accent underline-offset-2">GitHub</a>. Build it yourself with <code>build.sh --release</code>; the Install Guide and the full <a href="/guide" className="underline decoration-accent underline-offset-2">User Guide</a> are included inside the image.</p>
             </div>
           </div>
         </section>
@@ -189,7 +189,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="mx-auto flex max-w-[1120px] flex-wrap justify-between gap-4 border-t border-line px-5 py-9 text-[14.5px] text-fg-2">
-        <span>Dolly 0.2.0 · Developed by Rahul Patel</span><span>macOS 14 Sonoma or later</span>
+        <span>Dolly 0.2.1 · Developed by Rahul Patel</span><span>macOS 14 Sonoma or later</span>
       </footer>
     </>
   );

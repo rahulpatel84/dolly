@@ -251,19 +251,26 @@ struct SettingsView: View {
     private var hotkeys: some View {
         Form {
             Section("Recording") {
-                HotKeyField(title: "Record / stop", value: $settings.hkToggleRecording)
-                HotKeyField(title: "Record area", value: $settings.hkRecordArea)
-                HotKeyField(title: "Record last area again", value: $settings.hkRecordLastArea)
-                HotKeyField(title: "Pause / resume", value: $settings.hkPause)
-                HotKeyField(title: "Draw on screen (while recording)", value: $settings.hkDrawToggle)
+                HotKeyField(title: "Record / stop", value: $settings.hkToggleRecording, action: .toggleRecording, defaultValue: "\(kVK_ANSI_R):\(cmdKey | controlKey)")
+                HotKeyField(title: "Record area", value: $settings.hkRecordArea, action: .recordArea, defaultValue: "\(kVK_ANSI_R):\(cmdKey | controlKey | shiftKey)")
+                HotKeyField(title: "Record last area again", value: $settings.hkRecordLastArea, action: .recordLastArea, defaultValue: "\(kVK_ANSI_R):\(cmdKey | controlKey | optionKey)")
+                HotKeyField(title: "Pause / resume", value: $settings.hkPause, action: .pause, defaultValue: "\(kVK_ANSI_P):\(cmdKey | controlKey)")
+                HotKeyField(title: "Draw on screen (while recording)", value: $settings.hkDrawToggle, action: .drawToggle, defaultValue: "\(kVK_ANSI_D):\(cmdKey | controlKey)")
             }
             Section("Screenshots") {
-                HotKeyField(title: "Screenshot screen", value: $settings.hkScreenshot)
-                HotKeyField(title: "Screenshot area", value: $settings.hkScreenshotArea)
-                HotKeyField(title: "Screenshot window", value: $settings.hkScreenshotWindow)
+                HotKeyField(title: "Screenshot screen", value: $settings.hkScreenshot, action: .screenshot, defaultValue: "\(kVK_ANSI_S):\(cmdKey | controlKey)")
+                HotKeyField(title: "Screenshot area", value: $settings.hkScreenshotArea, action: .screenshotArea, defaultValue: "\(kVK_ANSI_A):\(cmdKey | controlKey)")
+                HotKeyField(title: "Screenshot window", value: $settings.hkScreenshotWindow, action: .screenshotWindow, defaultValue: "\(kVK_ANSI_W):\(cmdKey | controlKey)")
             }
-            Text("Click a field, then press the new combination. Esc cancels. Changes apply immediately.")
+            Text("Click a field, then press the new combination. Esc cancels. Changes apply immediately. Shortcuts macOS reserves (⇧⌘3, ⇧⌘4, ⇧⌘5, ⌘Space…) cannot be taken; pick another.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
+            Button("Reset all shortcuts to defaults") {
+                for key in ["hk.toggleRecording", "hk.recordArea", "hk.recordLastArea", "hk.pause", "hk.drawToggle", "hk.screenshot", "hk.screenshotArea", "hk.screenshotWindow"] {
+                    UserDefaults.standard.removeObject(forKey: key)
+                }
+                HotKeys.active?.resume()
+                NotificationCenter.default.post(name: .hotKeysChanged, object: nil)
+            }
         }.formStyle(.grouped)
     }
 }
@@ -295,25 +302,48 @@ final class SettingsWindowController {
 struct HotKeyField: View {
     let title: String
     @Binding var value: String
+    var action: HotKeys.Action? = nil
+    var defaultValue: String? = nil
     @State private var recording = false
     @State private var monitor: Any?
+    @State private var hint: String?
+
+    private var conflict: Bool {
+        guard let action, let hk = HotKeys.active else { return false }
+        return hk.registered[action] == false
+    }
 
     var body: some View {
-        HStack {
-            Text(title)
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let hint { Text(hint).font(.system(size: 10)).foregroundStyle(.secondary) }
+                else if conflict { Text("Not available — another app or macOS owns this shortcut").font(.system(size: 10)).foregroundStyle(.orange) }
+            }
             Spacer()
-            Button(recording ? "Press keys…" : HotKeyField.describe(value)) { start() }
+            if let defaultValue, defaultValue != value, !recording {
+                Button { value = defaultValue; apply() } label: { Image(systemName: "arrow.counterclockwise") }
+                    .buttonStyle(.borderless).help("Reset to default (\(HotKeyField.describe(defaultValue)))")
+            }
+            Button(recording ? "Press keys…" : HotKeyField.describe(value)) { recording ? stop() : start() }
                 .buttonStyle(.bordered).monospaced()
-                .tint(recording ? .accentColor : nil)
+                .tint(recording ? .accentColor : (conflict ? .orange : nil))
         }
+        .onDisappear { if recording { stop() } }
     }
 
     private func start() {
         recording = true
+        hint = "Press a combination with ⌘, ⌃ or ⌥ · Esc cancels"
+        // The live shortcuts would swallow the key press before it reaches us.
+        HotKeys.active?.suspend()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let flags = event.modifierFlags.intersection([.command, .control, .option, .shift])
             if event.keyCode == 53 { stop(); return nil }  // Escape cancels
-            guard !flags.isEmpty else { return nil }        // require a modifier
+            guard !flags.isEmpty, flags != [.shift] else {
+                hint = "Add ⌘, ⌃ or ⌥ — a plain key would block typing everywhere"
+                return nil
+            }
             var mods: UInt32 = 0
             if flags.contains(.command) { mods |= UInt32(cmdKey) }
             if flags.contains(.control) { mods |= UInt32(controlKey) }
@@ -321,15 +351,23 @@ struct HotKeyField: View {
             if flags.contains(.shift) { mods |= UInt32(shiftKey) }
             value = "\(event.keyCode):\(mods)"
             stop()
-            NotificationCenter.default.post(name: .hotKeysChanged, object: nil)
             return nil
         }
     }
 
     private func stop() {
         recording = false
+        hint = nil
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+        apply()
+    }
+
+    /// Re-register everything, then surface whether the system accepted it.
+    private func apply() {
+        HotKeys.active?.resume()
+        NotificationCenter.default.post(name: .hotKeysChanged, object: nil)
+        if conflict { hint = nil }
     }
 
     static func parse(_ s: String) -> (keyCode: UInt32, modifiers: UInt32)? {

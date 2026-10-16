@@ -281,6 +281,21 @@ if let index = CommandLine.arguments.firstIndex(of: "--selftest-editor") {
         FileHandle.standardError.write(Data(String(format: "export render %.0f ms\n", tRender * 1000).utf8))
         FileHandle.standardError.write(Data("copy=\(copied) done_closed=\(closed) overwrote_original=\(overwritten)\n".utf8))
         try? FileManager.default.removeItem(at: tmpURL)
+        // Decoration + formats.
+        model.style.background = .midnight; model.style.macWindow = true; model.style.title = "Dolly"
+        var sizes: [String] = []
+        if let deco = model.render(), let dcg = deco.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+            for f in ImageFormat.available {
+                let t0 = CFAbsoluteTimeGetCurrent()
+                let d = ImageEncoder.encode(dcg, format: f, quality: 0.8)
+                sizes.append(String(format: "%@=%.1fMB/%.0fms", f.label, Double(d?.count ?? 0) / 1e6, (CFAbsoluteTimeGetCurrent() - t0) * 1000))
+            }
+            FileHandle.standardError.write(Data("decorated \(dcg.width)x\(dcg.height): \(sizes.joined(separator: " "))\n".utf8))
+            if let dest = CGImageDestinationCreateWithURL(out.deletingLastPathComponent().appendingPathComponent("decorated.png") as CFURL, "public.png" as CFString, 1, nil) {
+                CGImageDestinationAddImage(dest, dcg, nil); CGImageDestinationFinalize(dest)
+            }
+        }
+        model.style = FrameStyle()
         guard let rendered = model.render(), let cg = rendered.cgImage(forProposedRect: nil, context: nil, hints: nil),
               let dest = CGImageDestinationCreateWithURL(out as CFURL, "public.png" as CFString, 1, nil) else {
             print("{\"ok\": false}"); exit(1)

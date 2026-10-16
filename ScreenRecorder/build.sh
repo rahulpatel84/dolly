@@ -12,7 +12,7 @@ APP_NAME="Dolly"
 EXEC_NAME="ScreenRecorder"            # SwiftPM product name; the bundle executable is renamed below
 BUNDLE_ID="com.rahulpatel.dolly"
 APP="build.noindex/${APP_NAME}.app"
-VERSION="0.2.0"
+VERSION="0.2.1"
 DEVELOPER="Rahul Patel"
 VOLNAME="Dolly"
 
@@ -35,6 +35,7 @@ fi
 cp Icon/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp Icon/MenuBarIcon.png Icon/MenuBarIcon@2x.png "$APP/Contents/Resources/"
 cp INSTALL.md "$APP/Contents/Resources/Install Guide.md"
+cp GUIDE.md "$APP/Contents/Resources/User Guide.md"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -106,6 +107,7 @@ if [ "${1:-}" = "--dmg" ] || [ "${1:-}" = "--release" ]; then
     cp -R "$APP" "$STAGE/"
     ln -s /Applications "$STAGE/Applications"
     cp INSTALL.md "$STAGE/Install Guide.md"
+    cp GUIDE.md "$STAGE/User Guide.md"
 
     hdiutil create \
         -volname "$VOLNAME" \
