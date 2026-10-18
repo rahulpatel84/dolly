@@ -38,7 +38,7 @@ A 3-second countdown appears before capture starts (turn it off in Settings → 
 - **Auto-stop** — Settings → General → *Stop recording automatically after* (5/15/30/60 min, or never).
 
 ### What gets captured
-- Video is HEVC (H.265) at 30 or 60 fps (Settings → Recording → Video). Quality: *Balanced*, *High*, or *Maximum*.
+- Video is HEVC (H.265) at 30 or 60 fps (Settings → Recording → Video). Quality: *Low*, *Medium* (default), or *High*.
 - **System audio** is always included. **Microphone** is added when *Include microphone* is on (menu bar or Settings → Recording → Audio).
 - **Webcam** — Settings → Recording → Webcam → *Record webcam alongside the screen*. The camera is saved as a separate movie beside the recording (`…-webcam.mov`) and composited as picture-in-picture when you polish (§3). A small live preview window shows the camera during recording.
 - **Telemetry** — Dolly also saves a tiny `…telemetry.json` of cursor positions and clicks. It drives Auto-Zoom and is never shared unless you copy the file yourself.

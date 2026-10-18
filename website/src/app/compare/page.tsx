@@ -71,7 +71,7 @@ export default function ComparePage() {
             <p><strong className="text-ink-fg">Scrolling screenshots are your daily work.</strong> CleanShot X and Shottr do this well; Dolly does not yet.</p>
             <p><strong className="text-ink-fg">You want a manual zoom timeline.</strong> Screen Studio lets you keyframe every move. Dolly plans zoom automatically and exposes strength and smoothing only.</p>
           </div>
-          <a href={DMG_URL} className="mt-8 inline-flex rounded-lg bg-ink-fg px-4 py-2.5 text-[14px] font-semibold text-ink">Otherwise, download Dolly — it's free</a>
+          <a href={DMG_URL} style={{ background: "var(--ink-fg)", color: "var(--ink)" }} className="mt-8 inline-flex rounded-lg px-4 py-2.5 text-[14px] font-semibold">Otherwise, download Dolly — it's free</a>
         </section>
       </main>
       <SiteFooter />

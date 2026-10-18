@@ -24,7 +24,7 @@ export default function SiteHeader({ active }: { active?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <a href={DMG_URL} className="hidden rounded-lg bg-fg px-3.5 py-2 text-[14px] font-semibold text-bg transition-opacity hover:opacity-90 sm:inline-flex">
+          <a href={DMG_URL} style={{ background: "var(--fg)", color: "var(--bg)" }} className="hidden rounded-lg px-3.5 py-2 text-[14px] font-semibold transition-opacity hover:opacity-90 sm:inline-flex">
             Download for Mac
           </a>
         </div>

@@ -162,7 +162,7 @@ export default function Home() {
                 {["Download the disk image and drag Dolly to Applications.", "Open it; confirm once in Privacy & Security → Open Anyway.", "Grant Screen Recording when asked, then relaunch.", "Press ⌃⌘S for your first screenshot, ⌃⌘R to record."].map((s, i) => <li key={s} className="flex gap-3"><span className="font-mono text-ink-fg">{i + 1}.</span>{s}</li>)}
               </ol>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={DMG_URL} className="rounded-lg bg-ink-fg px-5 py-3 text-[15px] font-semibold text-ink">Download Dolly {VERSION}</a>
+                <a href={DMG_URL} style={{ background: "var(--ink-fg)", color: "var(--ink)" }} className="rounded-lg px-5 py-3 text-[15px] font-semibold">Download Dolly {VERSION}</a>
                 <Link href="/docs/install" className="rounded-lg border border-ink-muted/40 px-5 py-3 text-[15px] font-semibold">Step-by-step guide</Link>
               </div>
             </div>

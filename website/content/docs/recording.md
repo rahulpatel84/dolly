@@ -27,7 +27,7 @@ A three-second countdown shows before capture starts (Settings → General). The
 
 ![Recording settings](/shots/settings-recording.png "Settings → Recording: frame rate, quality, microphone, webcam.")
 
-- **Video** is HEVC (H.265) at 30 or 60 fps. *Balanced* targets small files, *High* is the default, *Maximum* is near-lossless.
+- **Video** is HEVC (H.265) at 30 or 60 fps. *Low* targets small files, *Medium* is the default, *High* is near-lossless.
 - **System audio** is always recorded. **Microphone** is added when *Include microphone* is on (menu bar or Settings → Recording).
 - **Webcam** is saved as a separate movie (`…webcam.mov`) beside the recording and composited as picture-in-picture when you polish. A live preview window shows the camera while recording.
 

@@ -17,7 +17,7 @@
 
 ![Recording settings](/shots/settings-recording.png)
 
-Frame rate (30 / 60 fps) · Quality (Balanced / High / Maximum) · Include microphone · Record webcam alongside the screen, and which camera · a reminder of the draw-on-screen keys.
+Frame rate (30 / 60 fps) · Quality (Low / Medium / High) · Include microphone · Record webcam alongside the screen, and which camera · a reminder of the draw-on-screen keys.
 
 ## Auto-Zoom
 
