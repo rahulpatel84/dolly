@@ -1,0 +1,58 @@
+{
+ "dashboard-polished": {
+  "w": 1800,
+  "h": 1045
+ },
+ "dashboard-screenshots": {
+  "w": 1800,
+  "h": 1045
+ },
+ "dashboard": {
+  "w": 1800,
+  "h": 1045
+ },
+ "editor-styled": {
+  "w": 1800,
+  "h": 1254
+ },
+ "editor": {
+  "w": 1800,
+  "h": 1254
+ },
+ "install-dmg": {
+  "w": 1800,
+  "h": 853
+ },
+ "player": {
+  "w": 1800,
+  "h": 112
+ },
+ "settings-general": {
+  "w": 1800,
+  "h": 1774
+ },
+ "settings-hotkeys": {
+  "w": 1800,
+  "h": 1774
+ },
+ "settings-polish": {
+  "w": 1800,
+  "h": 1774
+ },
+ "settings-recording": {
+  "w": 1800,
+  "h": 1774
+ },
+ "settings-screenshots": {
+  "w": 1800,
+  "h": 1774
+ },
+ "styled-export": {
+  "w": 1800,
+  "h": 1242
+ },
+ "trim": {
+  "w": 1800,
+  "h": 279
+ }
+}

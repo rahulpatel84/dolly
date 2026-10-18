@@ -309,15 +309,21 @@ final class ScreenshotEditorModel: ObservableObject {
         panel.nameFieldStringValue = "\(base).\(format.ext)"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         busy = "Exporting…"
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let data = ImageEncoder.encode(cg, format: format, quality: quality)
-            let ok = data.map { (try? $0.write(to: url, options: .atomic)) != nil } ?? false
-            await MainActor.run {
-                self?.busy = nil
-                self?.message = ok ? "Exported \(url.lastPathComponent) · \(ByteCountFormatter.string(fromByteCount: Int64(data?.count ?? 0), countStyle: .file))" : "Export failed"
-                if ok { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-            }
+        Task { [weak self] in
+            let bytes = await Self.export(cg, to: url, format: format, quality: quality)
+            self?.busy = nil
+            self?.message = bytes > 0 ? "Exported \(url.lastPathComponent) · \(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))" : "Export failed"
+            if bytes > 0 { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         }
+    }
+
+    /// Encodes and writes off the main thread. Returns bytes written (0 = failed).
+    nonisolated static func export(_ cg: CGImage, to url: URL, format: ImageFormat, quality: Double) async -> Int {
+        await Task.detached(priority: .userInitiated) { () -> Int in
+            guard let data = ImageEncoder.encode(cg, format: format, quality: quality),
+                  (try? data.write(to: url, options: .atomic)) != nil else { return 0 }
+            return data.count
+        }.value
     }
 
     /// Size the current render would be in `format` at `quality` — for the
@@ -363,8 +369,9 @@ final class ScreenshotEditorModel: ObservableObject {
         }
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
-        DispatchQueue.global(qos: .userInitiated).async {
-            try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([request])
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do { try VNImageRequestHandler(cgImage: cg, options: [:]).perform([request]) }
+            catch { Task { @MainActor in self?.busy = nil; self?.message = "Text recognition failed: \(error.localizedDescription)" } }
         }
     }
 }
@@ -679,7 +686,7 @@ struct ScreenshotEditorView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("\(Int(model.pixelSize.width))×\(Int(model.pixelSize.height))px").font(.system(size: 11, weight: .medium)).monospacedDigit()
                         Text("Image size").font(.system(size: 9)).foregroundStyle(.secondary)
-                    }
+                    }.fixedSize().lineLimit(1)
                     HStack(spacing: 2) {
                         Button { model.zoomOut() } label: { Image(systemName: "minus.magnifyingglass") }.keyboardShortcut("-", modifiers: [.command]).help("Zoom out (⌘−)").onHover { model.hoverHint = $0 ? "Zoom out (⌘−)" : nil }
                         Menu {
@@ -939,7 +946,8 @@ final class ScreenshotEditorWindows {
     static let shared = ScreenshotEditorWindows()
     private var windows: [NSWindow] = []
 
-    func open(image: NSImage, sourceURL: URL?, saved: Task<Bool, Never>? = nil) {
+    @discardableResult
+    func open(image: NSImage, sourceURL: URL?, saved: Task<Bool, Never>? = nil) -> (model: ScreenshotEditorModel, window: NSWindow) {
         let model = ScreenshotEditorModel(image: image, sourceURL: saved == nil ? sourceURL : nil)
         model.pendingSave = saved
         model.pendingURL = sourceURL
@@ -968,7 +976,10 @@ final class ScreenshotEditorWindows {
         w.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         windows.append(w)
+        return (model, w)
     }
+
+    func closeAll() { windows.forEach { $0.close() }; windows.removeAll() }
 }
 
 // MARK: - Pinned screenshots (always on top)
@@ -977,6 +988,7 @@ final class ScreenshotEditorWindows {
 final class PinnedScreenshots {
     static let shared = PinnedScreenshots()
     private var windows: [NSWindow] = []
+    var count: Int { windows.count }
 
     func pin(_ image: NSImage) {
         let maxW: CGFloat = 480

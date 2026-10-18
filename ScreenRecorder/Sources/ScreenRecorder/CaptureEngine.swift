@@ -372,6 +372,12 @@ final class CaptureEngine: NSObject, SCStreamOutput, SCStreamDelegate {
     // MARK: - Output location
 
     static func recordingsDirectory() -> URL {
+        // Showcase / tests point the library elsewhere so personal files stay out.
+        if let override = ProcessInfo.processInfo.environment["DOLLY_RECORDINGS_DIR"], !override.isEmpty {
+            let dir = URL(fileURLWithPath: override, isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
+        }
         let base = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser
         let dir = base.appendingPathComponent("Screen Recordings", isDirectory: true)

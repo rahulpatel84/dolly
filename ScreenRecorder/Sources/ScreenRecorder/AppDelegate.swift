@@ -6,12 +6,13 @@ import Foundation
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
-    private var statusItem: NSStatusItem!
+    private(set) var statusItem: NSStatusItem!
     private let engine = CaptureEngine()
     private var elapsedTimer: Timer?
     private var recordingStart: Date?
 
-    private let dashboard = DashboardWindowController()
+    let dashboard = DashboardWindowController()
+    var engineIsRecording: Bool { engine.isRecording }
     private let regionSelector = RegionSelector()
     private let shotRegionSelector = RegionSelector()
     private let countdown = CountdownOverlay()
@@ -20,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let audioRecorder = AudioRecorder()
     private var webcamOnly: WebcamRecorder?
     private var webcamOnlyURL: URL?
-    private let settingsWindow = SettingsWindowController()
+    let settingsWindow = SettingsWindowController()
     private var settings: AppSettings { AppSettings.shared }
     private var limitTimer: Timer?
     private var scheduleTimer: Timer?
@@ -30,8 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Refuse to run as a duplicate, or from a read-only disk image.
-        guard LaunchGuards.check() else { return NSApp.terminate(nil) }
+        // Showcase runs unattended from the build folder: no guards or prompts.
+        if Showcase.outputDir == nil, FeatureAudit.dir == nil {
+            guard LaunchGuards.check() else { return NSApp.terminate(nil) }
+        }
 
+        AppSettings.applyAppearance(AppSettings.shared.appearance)
         buildMainMenu()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         setIdleIcon()
@@ -41,13 +46,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor in self?.handleUnexpectedStop(error, result) }
         }
 
-        if !Permissions.hasScreenRecording {
+        if !Permissions.hasScreenRecording, Showcase.outputDir == nil, FeatureAudit.dir == nil {
             Permissions.requestScreenRecording()
         }
         refreshTargets()
 
         dashboard.show()
         NSApp.activate(ignoringOtherApps: true)
+        Showcase.runIfRequested(delegate: self)
+        FeatureAudit.runIfRequested(delegate: self)
 
         hotKeys.register { [weak self] action in
             guard let self else { return }

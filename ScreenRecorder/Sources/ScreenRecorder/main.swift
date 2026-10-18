@@ -604,6 +604,24 @@ if let index = CommandLine.arguments.firstIndex(of: "--record") {
     MainActor.assumeIsolated { app.run() }
 }
 
+// Showcase: ScreenRecorder --showcase <dir>
+// Builds a demo library in <dir>/library, opens every window and writes
+// window screenshots to <dir> for the website and docs. Exits when done.
+if let i = CommandLine.arguments.firstIndex(of: "--showcase"), i + 1 < CommandLine.arguments.count {
+    let dir = URL(fileURLWithPath: CommandLine.arguments[i + 1], isDirectory: true)
+    setenv("DOLLY_RECORDINGS_DIR", dir.appendingPathComponent("library").path, 1)
+    MainActor.assumeIsolated { Showcase.outputDir = dir }
+}
+
+// Feature audit: ScreenRecorder --selftest-features <dir>
+// Exercises every menu action, dashboard operation, export format and editor
+// tool against a demo library and writes <dir>/report.json. Exit code = failures.
+if let i = CommandLine.arguments.firstIndex(of: "--selftest-features"), i + 1 < CommandLine.arguments.count {
+    let dir = URL(fileURLWithPath: CommandLine.arguments[i + 1], isDirectory: true)
+    setenv("DOLLY_RECORDINGS_DIR", dir.appendingPathComponent("library").path, 1)
+    MainActor.assumeIsolated { FeatureAudit.dir = dir; Showcase.outputDir = nil }
+}
+
 // NSApplication.delegate is a weak reference, so the delegate is held here at
 // top level rather than inside the closure, where it would be deallocated.
 let delegate = MainActor.assumeIsolated { AppDelegate() }

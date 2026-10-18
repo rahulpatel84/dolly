@@ -2,51 +2,86 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Enterprise palette: neutral surfaces, one brand accent for primary actions,
+   navy ink for emphasis. Every colour is a token so dark mode is a swap. */
 :root {
-  --bg: #F3F4F8; --fg: #1E2335; --fg-2: #6A7085; --card: #FFFFFF; --line: #D9DCE6;
-  --accent: #F23A3D; --accent-ink: #FFFFFF; --hero: #1C2138; --hero-fg: #FFFFFF; --hero-muted: #A9B0C7;
-  --code: #E9EBF2; --code-fg: #2B3045; --good: #1E8E4C; --partial: #B7791F;
+  --bg: #FFFFFF; --surface: #F6F7F9; --surface-2: #EEF0F3; --fg: #0B0F19; --fg-2: #5B6475; --fg-3: #8A92A3;
+  --line: #E5E7EB; --line-2: #D5D9E0; --accent: #E5484D; --accent-hover: #D43C41; --accent-ink: #FFFFFF;
+  --ink: #141A2E; --ink-fg: #FFFFFF; --ink-muted: #B2B9CC; --link: #1F5EFF;
+  --good: #1A7F4B; --warn: #B7791F; --bad: #B42318; --code: #F1F3F6; --code-fg: #1F2937;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 12px 32px -12px rgba(16,24,40,.18);
 }
 .dark {
-  --bg: #14182A; --fg: #EDEFF6; --fg-2: #A9B0C7; --card: #1C2138; --line: #2F3650;
-  --hero: #0F1222; --hero-muted: #9AA2BC; --code: #242A42; --code-fg: #DDE1EE; --good: #5FD38D; --partial: #E7B35A;
+  --bg: #0B0D12; --surface: #11141B; --surface-2: #171B24; --fg: #F3F4F6; --fg-2: #9AA3B2; --fg-3: #6B7484;
+  --line: #222733; --line-2: #2E3442; --accent: #F0555A; --accent-hover: #F46A6E; --accent-ink: #0B0D12;
+  --ink: #0F121B; --ink-fg: #F3F4F6; --ink-muted: #8F98AB; --link: #7AA2FF;
+  --good: #4ADE80; --warn: #FBBF24; --bad: #F87171; --code: #171B24; --code-fg: #E5E7EB;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 16px 40px -16px rgba(0,0,0,.7);
 }
 
 @theme inline {
-  --color-bg: var(--bg); --color-fg: var(--fg); --color-fg-2: var(--fg-2); --color-card: var(--card); --color-line: var(--line);
-  --color-accent: var(--accent); --color-accent-ink: var(--accent-ink); --color-hero: var(--hero); --color-hero-fg: var(--hero-fg);
-  --color-hero-muted: var(--hero-muted); --color-code: var(--code); --color-code-fg: var(--code-fg); --color-good: var(--good); --color-partial: var(--partial);
-  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --color-bg: var(--bg); --color-surface: var(--surface); --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg); --color-fg-2: var(--fg-2); --color-fg-3: var(--fg-3);
+  --color-line: var(--line); --color-line-2: var(--line-2);
+  --color-accent: var(--accent); --color-accent-hover: var(--accent-hover); --color-accent-ink: var(--accent-ink);
+  --color-ink: var(--ink); --color-ink-fg: var(--ink-fg); --color-ink-muted: var(--ink-muted); --color-link: var(--link);
+  --color-good: var(--good); --color-warn: var(--warn); --color-bad: var(--bad); --color-code: var(--code); --color-code-fg: var(--code-fg);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-html { color-scheme: light; }
+html { color-scheme: light; scroll-behavior: smooth; }
 html.dark { color-scheme: dark; }
-body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
-h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; letter-spacing: -0.01em; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; font-feature-settings: "cv11", "ss01"; }
+h1, h2, h3, h4 { letter-spacing: -0.02em; text-wrap: balance; font-weight: 600; }
 img { height: auto; max-width: 100%; display: block; }
-kbd { font-family: var(--font-mono); font-size: .82em; background: var(--code); color: var(--code-fg); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; display: inline-block; margin: 1px 0; }
-code { font-family: var(--font-mono); font-size: .9em; background: var(--code); color: var(--code-fg); padding: 1px 5px; border-radius: 4px; }
-details > summary { list-style: none; }
-details > summary::-webkit-details-marker { display: none; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+a { color: inherit; }
+kbd { font-family: var(--font-mono); font-size: .78em; background: var(--code); color: var(--code-fg); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; display: inline-block; line-height: 1.5; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code); color: var(--code-fg); padding: 1px 5px; border-radius: 4px; }
+pre { font-family: var(--font-mono); font-size: 13.5px; background: var(--code); color: var(--code-fg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; }
+::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 
-/* User guide (rendered from GUIDE.md) */
-.guide h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 1rem; }
-.guide h2 { font-size: 1.35rem; font-weight: 650; margin: 2.2rem 0 0.8rem; scroll-margin-top: 80px; }
-.guide h3 { font-size: 1.05rem; font-weight: 600; margin: 1.6rem 0 0.5rem; }
-.guide p, .guide li { font-size: 15.5px; line-height: 1.65; color: var(--fg-2); }
-.guide p { margin: 0.6rem 0; }
-.guide ul { padding-left: 1.3rem; margin: 0.6rem 0; list-style: disc; }
-.guide li { margin: 0.25rem 0; }
-.guide strong { color: var(--fg); font-weight: 600; }
-.guide code { font-size: 0.9em; padding: 0.1em 0.4em; border-radius: 5px; background: var(--card); border: 1px solid var(--line); }
-.guide a { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
-.guide hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
-.guide blockquote { margin: 1rem 0; padding: 0.8rem 1rem; border-left: 3px solid var(--accent); background: var(--card); border-radius: 8px; }
-.guide blockquote p { margin: 0; }
-.guide table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1.2rem; font-size: 14.5px; display: block; overflow-x: auto; }
-.guide th, .guide td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-.guide th { font-weight: 600; color: var(--fg); background: var(--card); }
-.guide td:first-child { white-space: nowrap; color: var(--fg); }
+/* Framed product screenshot */
+.shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+.shot img { width: 100%; }
+
+/* Prose (docs, compare notes, changelog) */
+.prose { font-size: 15.5px; line-height: 1.7; color: var(--fg-2); }
+.prose > :first-child { margin-top: 0; }
+.prose h1 { font-size: 2.1rem; line-height: 1.15; color: var(--fg); margin: 0 0 .6rem; }
+.prose h2 { font-size: 1.4rem; line-height: 1.3; color: var(--fg); margin: 2.4rem 0 .8rem; padding-top: .4rem; scroll-margin-top: 92px; }
+.prose h3 { font-size: 1.08rem; color: var(--fg); margin: 1.8rem 0 .5rem; scroll-margin-top: 92px; }
+.prose p { margin: .7rem 0; }
+.prose p.lead { font-size: 1.12rem; color: var(--fg-2); margin: 0 0 1.4rem; }
+.prose strong { color: var(--fg); font-weight: 600; }
+.prose a { color: var(--link); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent); }
+.prose a:hover { text-decoration-color: var(--link); }
+.prose ul, .prose ol { padding-left: 1.4rem; margin: .7rem 0; }
+.prose ul { list-style: disc; } .prose ol { list-style: decimal; }
+.prose li { margin: .3rem 0; } .prose li::marker { color: var(--fg-3); }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 2.2rem 0; }
+.prose blockquote { margin: 1.2rem 0; padding: .85rem 1rem .85rem 1.1rem; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 10px 10px 0; color: var(--fg-2); }
+.prose blockquote p { margin: 0; }
+.prose table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.4rem; font-size: 14.5px; display: block; overflow-x: auto; }
+.prose th, .prose td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.prose th { font-weight: 600; color: var(--fg); background: var(--surface); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.prose td:first-child { color: var(--fg); font-weight: 500; }
+.prose figure { margin: 1.4rem 0; }
+.prose figure img { border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.prose figcaption { font-size: 13px; color: var(--fg-3); margin-top: .55rem; }
+.prose .steps { counter-reset: step; list-style: none; padding: 0; margin: 1.2rem 0; }
+.prose .steps > li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.4rem 0; }
+.prose .steps > li::before { content: counter(step); position: absolute; left: 0; top: .05rem; width: 2rem; height: 2rem; border-radius: 999px; background: var(--ink); color: var(--ink-fg); font-weight: 600; font-size: 14px; display: grid; place-items: center; }
+.prose .steps > li > strong:first-child { display: block; color: var(--fg); font-size: 1.05rem; margin-bottom: .25rem; }
+
+/* Compare matrix */
+.matrix { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+.matrix th, .matrix td { padding: .7rem .8rem; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.matrix th { font-weight: 600; color: var(--fg); background: var(--surface); position: sticky; top: 64px; z-index: 1; }
+.matrix th:first-child, .matrix td:first-child { text-align: left; }
+.matrix td:first-child { color: var(--fg); font-weight: 500; }
+.matrix .dolly { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.matrix tr.group td { background: var(--surface); color: var(--fg-3); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; text-align: left; padding-top: 1rem; }
+.yes { color: var(--good); font-weight: 600; } .no { color: var(--fg-3); } .part { color: var(--warn); font-weight: 600; }

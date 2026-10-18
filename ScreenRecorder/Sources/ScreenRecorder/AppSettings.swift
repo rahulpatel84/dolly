@@ -51,6 +51,18 @@ final class AppSettings: ObservableObject {
     @AppStorage("afterScreenshot") var afterScreenshot: String = "editor" // editor | preview | copy | none
     @AppStorage("previewSeconds") var previewSeconds: Int = 8
     @AppStorage("windowBackground") var windowBackground: String = "shadow" // shadow | transparent | solid | gradient | trim
+    /// "system" | "light" | "dark" — applied to NSApp.appearance.
+    @AppStorage("appearance") var appearance: String = "system" {
+        didSet { AppSettings.applyAppearance(appearance) }
+    }
+    static func applyAppearance(_ value: String) {
+        switch value {
+        case "light": NSApp.appearance = NSAppearance(named: .aqua)
+        case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+        default: NSApp.appearance = nil
+        }
+    }
+
     @AppStorage("launchAtLogin") var launchAtLoginStored: Bool = false
 
     var screenshotFolder: URL {
@@ -116,6 +128,9 @@ final class AppSettings: ObservableObject {
         return s
     }
 
+    /// Which Settings tab is showing; not persisted.
+    @Published var settingsTab = "general"
+
     private init() {}
 }
 
@@ -124,12 +139,12 @@ struct SettingsView: View {
     @State private var cameras: [(id: String, name: String)] = []
 
     var body: some View {
-        TabView {
-            general.tabItem { Label("General", systemImage: "gearshape") }
-            recording.tabItem { Label("Recording", systemImage: "record.circle") }
-            polish.tabItem { Label("Auto-Zoom", systemImage: "wand.and.stars") }
-            screenshots.tabItem { Label("Screenshots", systemImage: "camera") }
-            hotkeys.tabItem { Label("Hotkeys", systemImage: "keyboard") }
+        TabView(selection: $settings.settingsTab) {
+            general.tabItem { Label("General", systemImage: "gearshape") }.tag("general")
+            recording.tabItem { Label("Recording", systemImage: "record.circle") }.tag("recording")
+            polish.tabItem { Label("Auto-Zoom", systemImage: "wand.and.stars") }.tag("polish")
+            screenshots.tabItem { Label("Screenshots", systemImage: "camera") }.tag("screenshots")
+            hotkeys.tabItem { Label("Hotkeys", systemImage: "keyboard") }.tag("hotkeys")
         }
         .frame(width: 560, height: 520)
         .onAppear { cameras = WebcamRecorder.availableCameras() }
@@ -139,6 +154,9 @@ struct SettingsView: View {
         Form {
             Section {
                 Toggle("Launch at login", isOn: Binding(get: { settings.launchAtLogin }, set: { settings.launchAtLogin = $0 }))
+                Picker("Appearance", selection: $settings.appearance) {
+                    Text("Match system").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark")
+                }
                 Toggle("3-second countdown before recording", isOn: $settings.countdownEnabled)
                 Picker("Stop recording automatically after", selection: $settings.maxDurationMinutes) {
                     Text("Never").tag(0); Text("5 minutes").tag(5); Text("15 minutes").tag(15); Text("30 minutes").tag(30); Text("60 minutes").tag(60)
@@ -277,7 +295,7 @@ struct SettingsView: View {
 
 @MainActor
 final class SettingsWindowController {
-    private var window: NSWindow?
+    private(set) var window: NSWindow?
 
     func show() {
         if let window {

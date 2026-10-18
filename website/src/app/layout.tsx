@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
-const FONTS = "https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap";
+const FONTS = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
 
 export const metadata: Metadata = {
-  title: "Dolly · The screen recorder that follows you",
-  description: "Dolly is a macOS screen recorder that records clean and polishes afterwards: auto-zoom, click rings, webcam picture-in-picture, silence removal, and a screenshot editor with OCR. By Rahul Patel.",
-  openGraph: { title: "Dolly · The screen recorder that follows you", description: "Record clean. Polish after.", images: ["/assets/polish.png"] },
+  metadataBase: new URL("https://screen-recorder-site.vercel.app"),
+  title: { default: "Dolly — Screen recorder for macOS with automatic zoom", template: "%s · Dolly" },
+  description: "Dolly records your Mac screen, system audio, mic and webcam, then polishes the result automatically: smooth zoom to where you work, cursor emphasis, silence removal. Screenshots with a full annotation editor. Free and open source.",
+  openGraph: { title: "Dolly — Screen recorder for macOS", description: "Record, polish automatically, annotate, export. Free and open source.", type: "website" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -18,7 +18,7 @@ it needs), where recordings go, and how to uninstall.
 
 ```bash
 ./build.sh            # build the .app into build.noindex/
-./build.sh --dmg      # build the .app and dist/Dolly-0.2.1.dmg
+./build.sh --dmg      # build the .app and dist/Dolly-0.2.2.dmg
 open build.noindex/ScreenRecorder.app
 ```
 

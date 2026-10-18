@@ -12,7 +12,7 @@ APP_NAME="Dolly"
 EXEC_NAME="ScreenRecorder"            # SwiftPM product name; the bundle executable is renamed below
 BUNDLE_ID="com.rahulpatel.dolly"
 APP="build.noindex/${APP_NAME}.app"
-VERSION="0.2.1"
+VERSION="0.2.2"
 DEVELOPER="Rahul Patel"
 VOLNAME="Dolly"
 

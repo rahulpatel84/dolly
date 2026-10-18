@@ -1,6 +1,6 @@
 # Dolly User Guide
 
-**Dolly** — *the recorder that follows you.* Record your screen, polish the result automatically, take screenshots and annotate them, all from the menu bar or the Dolly dashboard. This guide covers every feature. Version 0.2.1 · macOS 14 or newer.
+**Dolly** — *the recorder that follows you.* Record your screen, polish the result automatically, take screenshots and annotate them, all from the menu bar or the Dolly dashboard. This guide covers every feature. Version 0.2.2 · macOS 14 or newer.
 
 > **First launch:** macOS asks for **Screen Recording** permission (System Settings → Privacy & Security → Screen Recording). Toggle **Dolly** on, then quit and reopen Dolly once. Microphone and Camera permissions are requested only when you first use those features. If a recording ever comes out black, choose **Help → Grant Screen Recording Permission…**
 

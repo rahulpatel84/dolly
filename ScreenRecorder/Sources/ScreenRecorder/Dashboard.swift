@@ -945,10 +945,10 @@ struct TrimSheet: View {
 /// Owns the dashboard window, plus the player and trim windows it spawns.
 @MainActor
 final class DashboardWindowController {
-    private var window: NSWindow?
-    private var playerWindow: NSWindow?
-    private var trimWindow: NSWindow?
-    private let model = DashboardModel()
+    private(set) var window: NSWindow?
+    private(set) var playerWindow: NSWindow?
+    private(set) var trimWindow: NSWindow?
+    let model = DashboardModel()
     private var observers: [Any] = []
     private var subscriptions: [AnyCancellable] = []
 

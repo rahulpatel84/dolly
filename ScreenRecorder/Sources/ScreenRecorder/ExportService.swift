@@ -73,6 +73,15 @@ enum ExportService {
         panel.canCreateDirectories = true
         panel.title = "Export Recording"
         guard panel.runModal() == .OK, let destination = panel.url else { return nil }
+        try await export(source: source, to: destination, format: format, progress: progress)
+        return destination
+    }
+
+    /// Writes `source` as `format` to `destination` (replaced if present).
+    static func export(
+        source: URL, to destination: URL, format: Format,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws {
         try? FileManager.default.removeItem(at: destination)
 
         switch format {
@@ -109,7 +118,6 @@ enum ExportService {
             let tmp = try await GifExporter.export(videoURL: source, progress: progress)
             try FileManager.default.moveItem(at: tmp, to: destination)
         }
-        return destination
     }
 
     /// Renames a recording and every sidecar that belongs to it.

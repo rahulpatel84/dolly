@@ -1,196 +1,176 @@
-import Image from "next/image";
-import ThemeToggle from "@/components/ThemeToggle";
+import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import Shot from "@/components/Shot";
+import shots from "@/lib/shots.json";
+import { DMG_URL, GITHUB, VERSION } from "@/lib/site";
+import { PRODUCTS, ROWS } from "@/lib/compare";
 
-const features = [
-  ["⌃⌘R · ⌃⇧⌘R · window picker", "Record screen, area, or window", "Full display at native Retina resolution, a dragged region, or any window — and “record last area again” for repeat takes."],
-  ["automatic", "Auto-Zoom", "The camera follows your cursor, pushes in where you work, pulls back when you roam. Smoothed both directions so it never trails or jumps."],
-  ["from telemetry", "Cursor halo and click rings", "A soft highlight on the pointer and an expanding ring on every click, composited in source space so they zoom with the content."],
-  ["system + mic", "Audio on separate tracks", "System audio always, microphone when you want it, each on its own track. Silence removal cuts dead air with padding so speech is never clipped."],
-  ["picture-in-picture", "Webcam without burning it in", "Recorded to its own file on the same clock, shown as a circular inset by Auto-Zoom. Leave it out of any export with one switch."],
-  ["⌃⌘P", "Pause and resume", "The gap is removed from the file, not frozen into it — one timeline shared by every track."],
-  ["⌃⌘D", "Draw on screen while recording", "Sketch arrows over anything mid-take. This is the one effect that is recorded into the video, on purpose."],
-  ["lossless", "Trim, or cut a section out", "Keep a range or remove one from the middle; the halves join. No re-encode, and the telemetry follows the cut."],
-  ["MOV · MP4 · GIF · M4A", "Export and share", "Muted MP4, compressed 1080p, audio-only M4A, animated GIF. Share sheet to AirDrop, Messages, Mail. Up to 4K output."],
-  ["canvas", "Framed background", "Inset the recording on a gradient or solid canvas with rounded corners and a soft shadow — the produced look, in one setting."],
-  ["unattended", "Schedule and auto-stop", "Start at a time, stop after a length. Or set a maximum duration so a forgotten recording ends itself."],
-  ["audio · webcam only", "Other modes", "Record just system audio and voice to M4A, or just the camera — same menu, same folder."],
+type Dim = { w: number; h: number };
+const S = shots as Record<string, Dim>;
+const dim = (k: string): Dim => S[k] ?? { w: 1800, h: 1100 };
+
+const STEPS = [
+  { n: "01", t: "Record", d: "Full screen, an area, or one window. System audio, your mic and webcam if you want them. Pause, draw on screen, schedule, auto-stop.", shot: "settings-recording", alt: "Recording settings" },
+  { n: "02", t: "Polish — automatically", d: "Auto-Zoom reads the cursor telemetry recorded beside every clip and plans the camera: in on clicks and typing, out when you pause. Cursor halo, click rings, silence removal, background framing. One click, re-runnable.", shot: "styled-export", alt: "Polished export on a gradient background" },
+  { n: "03", t: "Share", d: "Play, trim, export to MOV, MP4, muted MP4, compressed H.264, M4A or GIF — then AirDrop, Messages, Mail or any app via the share sheet. Nothing is uploaded unless you do it.", shot: "player", alt: "Dolly player window" },
 ];
 
-const compare: [string, string, "y" | "n" | "p", string, "y" | "n" | "p"][] = [
-  ["Full screen, area, window capture", "Yes", "y", "Yes", "y"],
-  ["System audio + microphone, separate tracks", "Yes", "y", "Yes", "y"],
-  ["Automatic cursor-following zoom", "Yes, after capture, re-runnable", "y", "No", "n"],
-  ["Cursor and click effects", "Applied after capture", "y", "Burned in at capture", "y"],
-  ["Webcam", "Separate file, PiP at render", "y", "Overlay at capture", "y"],
-  ["Draw on screen while recording", "Yes", "y", "Yes", "y"],
-  ["Silence removal", "Yes", "y", "No", "n"],
-  ["Background framing", "Yes", "y", "No", "n"],
-  ["Screenshot editor with OCR, blur, pin", "Yes", "y", "Basic", "p"],
-  ["Scrolling screenshot", "No", "n", "Yes", "y"],
-  ["Keystroke display", "Not yet", "n", "Yes", "y"],
-  ["Upload to YouTube / Drive", "No — share sheet instead", "n", "Yes", "y"],
-  ["Scheduled recording, auto-stop", "Yes", "y", "Yes", "y"],
-  ["Export", "MOV, MP4, GIF, M4A, up to 4K", "y", "MP4, MOV, MKV, AVI, GIF, MP3", "y"],
-  ["Windows version", "In progress", "p", "Yes", "y"],
-  ["Price", "Free", "y", "Subscription, trial watermark", "n"],
+const FEATURES = [
+  { t: "Auto-Zoom", d: "Camera moves planned from where you actually worked, with strength and smoothing presets.", href: "/docs/auto-zoom" },
+  { t: "Screenshot editor", d: "Arrows, shapes, highlighter, blur, text, numbered steps, crop, colour picker, OCR. Opens the instant you capture.", href: "/docs/editor" },
+  { t: "Styled exports", d: "macOS window frame, six gradients, padding, corners, shadow — applied to copy, save and export alike.", href: "/docs/editor#style" },
+  { t: "Six image formats", d: "PNG, JPEG, HEIC, WebP, TIFF or PDF with a quality slider and live size estimate.", href: "/docs/editor#export" },
+  { t: "Dashboard", d: "Library with search, sort, grid and list, an inspector with every action, player and trimmer.", href: "/docs/dashboard" },
+  { t: "Hotkeys everywhere", d: "Eight configurable global shortcuts that need no Accessibility permission. Conflicts are flagged.", href: "/docs/hotkeys" },
+  { t: "Webcam & audio modes", d: "Webcam sidecar composited as picture-in-picture; audio-only and webcam-only recordings.", href: "/docs/recording" },
+  { t: "Private by design", d: "No account, no cloud, no analytics. Files live in ~/Movies. Open source.", href: "/docs/faq" },
 ];
 
-const faq = [
-  ["Does it upload my recordings anywhere?", "No. There is no account and no server. Sharing uses the macOS share sheet, which sends files only where you point it."],
-  ["Why does it keep the webcam and cursor effects separate?", "Because once an effect is burned into the pixels it can never be adjusted. Keeping the telemetry and webcam as sidecar files costs nothing during capture and lets every effect be re-rendered with different settings later."],
-  ["What does “zero dropped frames” mean?", "The encoder keeps up with capture. Every recording reports frames written and dropped when it ends, so you see the number rather than discovering a stutter later."],
-  ["What if macOS stops the capture on its own?", "Whatever was captured is finalised and playable, and the app tells you why it ended. Quitting mid-recording finishes the file too."],
-  ["Will there be a Windows version?", "The zoom engine is already ported and tested; the Windows capture layer compiles but has not been run on Windows yet."],
-];
-
-const tone = { y: "text-good font-semibold", n: "text-fg-2", p: "text-partial font-semibold" };
-
-function SectionHead({ title, lede }: { title: string; lede: string }) {
-  return (
-    <div className="mb-9 grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:items-end">
-      <h2 className="text-[clamp(28px,3.4vw,40px)] font-semibold leading-[1.1]">{title}</h2>
-      <p className="max-w-[40em] text-lg text-fg-2">{lede}</p>
-    </div>
-  );
-}
+const TEASER = ["Automatic zoom to activity", "Silence removal", "OCR (copy text from image)", "macOS-style frame & gradient background", "Works fully offline, no account", "Price"];
 
 export default function Home() {
+  const teaserCols = ["dolly", "movavi", "loom", "cleanshot", "screen-studio"];
   return (
     <>
-      <header className="bg-hero text-hero-fg">
-        <div className="mx-auto max-w-[1120px] px-5">
-          <nav className="flex items-center justify-between gap-4 py-3.5">
-            <a href="#top" className="flex items-center gap-2.5 font-display text-lg font-semibold">
-              <Image src="/assets/icon.png" alt="" width={30} height={30} className="rounded-[7px]" />Dolly
-            </a>
-            <ul className="hidden gap-5 text-[15px] text-hero-muted md:flex">
-              {[["#features", "Features"], ["#how", "How it works"], ["#editor", "Screenshots"], ["#compare", "Compare"], ["#install", "Install"], ["/guide", "Guide"], ["https://github.com/rahulpatel84/dolly", "GitHub"]].map(([h, t]) => (
-                <li key={h}><a href={h} className="hover:text-hero-fg">{t}</a></li>
-              ))}
-            </ul>
-            <ThemeToggle />
-          </nav>
-          <div id="top" className="grid items-center gap-10 py-12 pb-16 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+      <SiteHeader active="Product" />
+      <main id="product">
+        <section className="border-b border-line">
+          <div className="mx-auto max-w-[1200px] px-5 pb-16 pt-20 md:pt-24">
+            <div className="max-w-[780px]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-[12.5px] font-medium text-fg-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-good" /> Dolly {VERSION} · macOS 14+ · free and open source
+              </div>
+              <h1 className="mt-6 text-[44px] leading-[1.05] md:text-[60px]">Screen recordings that look produced. Automatically.</h1>
+              <p className="mt-6 max-w-[640px] text-[18px] leading-relaxed text-fg-2">
+                Dolly records your Mac, then does the editing: zooms to where you work, highlights the cursor, cuts the dead air and frames the result. Screenshots get a full annotation editor. Everything stays on your machine.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <a href={DMG_URL} className="rounded-lg bg-accent px-5 py-3 text-[15px] font-semibold text-accent-ink hover:bg-accent-hover">Download for Mac</a>
+                <Link href="/docs/install" className="rounded-lg border border-line-2 px-5 py-3 text-[15px] font-semibold hover:bg-surface">Installation guide</Link>
+                <a href={GITHUB} className="px-2 py-3 text-[14px] font-medium text-fg-2 hover:text-fg">View source ↗</a>
+              </div>
+              <p className="mt-4 text-[13px] text-fg-3">1.4 MB disk image · Apple silicon and Intel · no account required</p>
+            </div>
+            <div className="mt-14">
+              <Shot src="/shots/dashboard.png" alt="The Dolly dashboard showing a recordings library and inspector" {...dim("dashboard")} />
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-line bg-surface">
+          <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-6 px-5 py-8 md:grid-cols-4">
+            {[["4K · 60 fps", "HEVC capture, system audio, mic and webcam"], ["≈ 1× realtime", "Auto-Zoom render speed on Apple silicon"], ["6 + 6 formats", "Video and image exports, no re-encode for MP4"], ["0 uploads", "No cloud, no telemetry, no account"]].map(([k, v]) => (
+              <div key={k}><div className="text-[22px] font-semibold tracking-tight">{k}</div><div className="mt-1 text-[13.5px] text-fg-2">{v}</div></div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1200px] px-5 py-20" id="how">
+          <div className="max-w-[640px]">
+            <div className="text-[12.5px] font-semibold uppercase tracking-[.08em] text-fg-3">How it works</div>
+            <h2 className="mt-3 text-[34px] leading-tight">Record once. Polish any time.</h2>
+            <p className="mt-4 text-fg-2">Effects are never burned into the pixels. Dolly keeps the clean recording and a small telemetry file, so a clip can be re-polished with different settings months later.</p>
+          </div>
+          <div className="mt-12 space-y-20">
+            {STEPS.map((s, i) => (
+              <div key={s.n} className={`grid items-center gap-10 md:grid-cols-2 ${i % 2 ? "md:[&>*:first-child]:order-2" : ""}`}>
+                <div>
+                  <div className="font-mono text-[13px] text-fg-3">{s.n}</div>
+                  <h3 className="mt-2 text-[26px]">{s.t}</h3>
+                  <p className="mt-3 text-[15.5px] leading-relaxed text-fg-2">{s.d}</p>
+                </div>
+                <Shot src={`/shots/${s.shot}.png`} alt={s.alt} {...dim(s.shot)} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-y border-line bg-surface" id="editor">
+          <div className="mx-auto max-w-[1200px] px-5 py-20">
+            <div className="grid gap-10 md:grid-cols-[1fr_1.4fr] md:items-start">
+              <div>
+                <div className="text-[12.5px] font-semibold uppercase tracking-[.08em] text-fg-3">Screenshots</div>
+                <h2 className="mt-3 text-[34px] leading-tight">An editor that opens before you can reach for one.</h2>
+                <p className="mt-4 text-fg-2">Capture a screen, an area or a window at native resolution. The editor appears immediately with arrows, shapes, highlighter, blur, text, numbered steps and crop — plus a colour picker and on-device OCR.</p>
+                <p className="mt-3 text-fg-2">Style it with a macOS window frame on a gradient and export as PNG, JPEG, HEIC, WebP, TIFF or PDF.</p>
+                <Link href="/docs/editor" className="mt-6 inline-block text-[14.5px] font-semibold underline underline-offset-4">Editor documentation →</Link>
+              </div>
+              <div className="space-y-5">
+                <Shot src="/shots/editor.png" alt="Screenshot editor with annotations" {...dim("editor")} />
+                <Shot src="/shots/editor-styled.png" alt="Screenshot styled with a macOS window frame on a gradient" {...dim("editor-styled")} caption="Style: Midnight gradient, macOS window frame, title. Applied to copy, save, share and export." />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1200px] px-5 py-20" id="features">
+          <div className="text-[12.5px] font-semibold uppercase tracking-[.08em] text-fg-3">Capabilities</div>
+          <h2 className="mt-3 text-[34px] leading-tight">Everything in the box</h2>
+          <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((f) => (
+              <Link key={f.t} href={f.href} className="group bg-bg p-6 transition-colors hover:bg-surface">
+                <div className="text-[16px] font-semibold">{f.t}</div>
+                <p className="mt-2 text-[14px] leading-relaxed text-fg-2">{f.d}</p>
+                <div className="mt-4 text-[13px] font-medium text-fg-3 group-hover:text-fg">Learn more →</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-y border-line bg-surface">
+          <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-5 py-20 md:grid-cols-2">
+            <Shot src="/shots/settings-hotkeys.png" alt="Hotkeys settings" {...dim("settings-hotkeys")} />
             <div>
-              <p className="font-mono text-xs uppercase tracking-[.08em] text-hero-muted">Dolly · macOS 14+ · Apple Silicon &amp; Intel</p>
-              <h1 className="mt-3 text-[clamp(38px,5.6vw,66px)] font-bold leading-[1.02]">Record clean.<br />Polish <em className="not-italic text-accent">after.</em></h1>
-              <p className="mt-4 max-w-[34em] text-[19px] text-hero-muted">The screen recorder that follows you. Dolly keeps your cursor telemetry beside the video, then zooms, frames and highlights clicks afterwards — so nothing is ever burned into the pixels, and any recording can be re-polished.</p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.1/Dolly-0.2.1.dmg" className="rounded-lg bg-accent px-[18px] py-3 font-semibold text-accent-ink focus-visible:outline-2 focus-visible:outline-accent">Download for Mac · 0.2.1</a>
-                <a href="#how" className="rounded-lg border border-current px-[18px] py-3 font-semibold">See how it works</a>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-4 font-mono text-[12.5px] text-hero-muted">
-                <span>0 dropped frames at 1080p60 in testing</span><span>HEVC, hardware encoded</span><span>No account, no upload</span>
-              </div>
-            </div>
-            <figure className="relative m-0">
-              <Image src="/assets/polish.png" alt="A polished recording: the screen inset on a gradient canvas with rounded corners, a soft cursor halo and a circular webcam inset" width={640} height={360} priority className="w-full rounded-xl shadow-[0_30px_60px_rgba(0,0,0,.45)]" />
-              <figcaption className="absolute bottom-3.5 left-3.5 rounded-md bg-black/55 px-2 py-1 font-mono text-[11.5px] text-white">Auto-Zoom output · gradient frame · webcam picture-in-picture</figcaption>
-            </figure>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[1120px] px-5">
-        <section id="features" className="py-16">
-          <SectionHead title="Everything a screen recorder should do — and the one thing only Dolly does." lede="Capture, audio, webcam, pause, trim, export — the table stakes are all here. The difference is that the polish happens after you stop, from data captured while you recorded." />
-          <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(([k, h, p]) => (
-              <div key={h} className="flex flex-col gap-2 rounded-[10px] border border-line bg-card p-5 pb-[22px]">
-                <span className="font-mono text-xs text-fg-2">{k}</span>
-                <h3 className="text-xl font-semibold">{h}</h3>
-                <p className="text-[15.5px] text-fg-2">{p}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="how" className="border-t border-line py-16">
-          <SectionHead title="Why the polish can be redone forever" lede="Most recorders bake zoom and highlights into the pixels as they capture. Once there, they can never change. Dolly keeps them separate — hence the name: a dolly is the camera move that follows the action." />
-          <div className="grid overflow-hidden rounded-xl border border-line bg-card md:grid-cols-3">
-            {[
-              ["01 · RECORD", "A clean stream, plus telemetry", "ScreenCaptureKit writes the raw screen to HEVC. Alongside it, the cursor position and clicks are sampled 60 times a second into a small sidecar file — no extra permission needed.", 'Recording 2026-10-14 at 12.45.16.mov\nRecording 2026-10-14 at 12.45.16.telemetry.json\n{ "t": 1.2218, "x": 2887.1, "y": 1148.6, "click": true }'],
-              ["02 · PLAN", "A camera path, from arithmetic", "The timeline is bucketed into half-second windows. Tight cursor activity or a click pulls the camera in; roaming pushes it out. The path is smoothed forwards then backwards, which cancels the lag that makes auto-zoom feel seasick.", "window 0.5 s · zoom 1.3–3.0×\nsmoothing 0.5–3.0 s · click hold 1.0 s\nedge-clamped, never off-frame"],
-              ["03 · RENDER", "Apply it, as often as you like", "Zoom, halo, click rings, webcam inset, background frame and silence removal are rendered into a new file. The original is untouched. Change a setting and run it again.", "5 s clip → 1.3 s render\noriginal: never modified"],
-            ].map(([n, h, p, pre], i) => (
-              <div key={n} className={`p-6 ${i > 0 ? "border-t border-line md:border-l md:border-t-0" : ""}`}>
-                <span className="font-mono text-xs tracking-[.08em] text-accent">{n}</span>
-                <h3 className="mt-2 text-xl font-semibold">{h}</h3>
-                <p className="mt-2 text-[15.5px] text-fg-2">{p}</p>
-                <pre className="mt-3.5 overflow-x-auto rounded-lg bg-code p-3 font-mono text-xs leading-normal text-code-fg">{pre}</pre>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="editor" className="border-t border-line py-16">
-          <SectionHead title="Screenshots with an editor that opens itself" lede="Capture the screen, an area, or a window. The editor opens instantly — on a 31-megapixel Retina capture it takes 80 ms — with every tool a screenshot needs." />
-          <div className="grid items-center gap-7 md:grid-cols-2">
-            <Image src="/assets/editor.png" alt="The screenshot editor's output: an arrow, a rectangle, a highlight band, a pixelated blur region, a text label, a numbered step badge and an ellipse drawn over a capture" width={1600} height={1034} className="w-full rounded-[10px] border border-line" />
-            <div className="min-w-0">
-              <h3 className="text-xl font-semibold">Arrows, boxes, blur, text, numbers, crop</h3>
-              <ul className="mt-3.5 grid gap-2 text-base text-fg-2 [&_li]:break-words [&_li::before]:mr-2 [&_li::before]:text-accent [&_li::before]:content-['—']">
-                <li>Single-key tools: <kbd>A</kbd> arrow <kbd>R</kbd> rect <kbd>O</kbd> ellipse <kbd>B</kbd> blur <kbd>T</kbd> text <kbd>N</kbd> number <kbd>C</kbd> crop</li>
-                <li><strong className="text-fg">Copy Text</strong> runs OCR over the whole screenshot</li>
-                <li>Colour picker: click any pixel, its hex is copied</li>
-                <li>Pin any screenshot above every window</li>
-                <li>Window captures with a transparent, solid, gradient or trimmed background</li>
-                <li>PNG or JPEG, any folder, optional 1× downscale of Retina captures</li>
-                <li>Zoom ⌘+ / ⌘− / ⌘0 · <kbd>⏎</kbd> Done = save, copy to clipboard, close</li>
+              <div className="text-[12.5px] font-semibold uppercase tracking-[.08em] text-fg-3">Control</div>
+              <h2 className="mt-3 text-[34px] leading-tight">Yours to configure, nothing to administer</h2>
+              <p className="mt-4 text-fg-2">Five settings tabs cover frame rate and quality, microphone and webcam, Auto-Zoom presets, screenshot behaviour and every hotkey. Shortcuts that macOS or another app owns are flagged, and each has a one-click reset.</p>
+              <ul className="mt-5 space-y-2 text-[14.5px] text-fg-2">
+                {["Match system, light or dark appearance", "Launch at login, countdown, auto-stop", "Recordings folder of your choice", "Window-screenshot backgrounds: shadow, transparent, solid, gradient, trimmed"].map((i) => <li key={i} className="flex gap-2"><span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-fg-3" />{i}</li>)}
               </ul>
+              <Link href="/docs/settings" className="mt-6 inline-block text-[14.5px] font-semibold underline underline-offset-4">Settings reference →</Link>
             </div>
           </div>
         </section>
 
-        <section id="compare" className="border-t border-line py-16">
-          <SectionHead title="Dolly against Movavi Screen Recorder" lede="An honest comparison. Movavi is a mature product with things this app doesn't have yet; the table says which." />
-          <div className="overflow-x-auto rounded-[10px] border border-line">
-            <table className="w-full min-w-[620px] border-collapse bg-card text-[15.5px]">
-              <thead><tr>{["Capability", "Dolly", "Movavi Screen Recorder"].map((h) => <th key={h} className="border-b border-line px-3.5 py-3 text-left font-mono text-xs font-medium uppercase tracking-[.06em] text-fg-2">{h}</th>)}</tr></thead>
+        <section className="mx-auto max-w-[1200px] px-5 py-20" id="compare">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="text-[12.5px] font-semibold uppercase tracking-[.08em] text-fg-3">Compare</div>
+              <h2 className="mt-3 text-[34px] leading-tight">Against the tools you already know</h2>
+            </div>
+            <Link href="/compare" className="text-[14.5px] font-semibold underline underline-offset-4">Full comparison, {ROWS.length} capabilities →</Link>
+          </div>
+          <div className="mt-8 overflow-x-auto rounded-xl border border-line">
+            <table className="matrix min-w-[760px]">
+              <thead><tr><th>Capability</th>{teaserCols.map((c) => <th key={c} className={c === "dolly" ? "dolly" : ""}>{PRODUCTS.find((p) => p.id === c)!.name}</th>)}</tr></thead>
               <tbody>
-                {compare.map(([c, a, at, b, bt]) => (
-                  <tr key={c}>
-                    <td className="border-b border-line px-3.5 py-3 align-top">{c}</td>
-                    <td className={`border-b border-line px-3.5 py-3 align-top ${tone[at]}`}>{a}</td>
-                    <td className={`border-b border-line px-3.5 py-3 align-top ${tone[bt]}`}>{b}</td>
-                  </tr>
-                ))}
+                {TEASER.map((f) => { const r = ROWS.find((x) => x.feature === f)!; return (
+                  <tr key={f}><td>{f}</td>{teaserCols.map((c) => { const v = r.values[c]; return <td key={c} className={c === "dolly" ? "dolly" : ""}>{v === "yes" ? <span className="yes">✓</span> : v === "no" ? <span className="no">—</span> : v === "part" ? <span className="part">◐</span> : <span className="text-[12.5px] text-fg-2">{v}</span>}</td>; })}</tr>
+                ); })}
               </tbody>
             </table>
           </div>
+          <p className="mt-3 text-[13px] text-fg-3">Honest gaps: Dolly has no scrolling capture, no keystroke overlay and no cloud links. <Link href="/compare" className="underline">See where to pick something else.</Link></p>
         </section>
 
-        <section id="install" className="border-t border-line py-16">
-          <SectionHead title="Install in a minute" lede="Signed locally rather than notarised by Apple, so the first launch needs one extra click. Everything runs on your Mac; nothing is uploaded." />
-          <div className="grid gap-7 md:grid-cols-2">
-            <ol className="grid list-decimal gap-3 pl-5 text-[16.5px]">
-              <li><strong><a href="https://github.com/rahulpatel84/dolly/releases/download/v0.2.1/Dolly-0.2.1.dmg" className="underline decoration-accent underline-offset-2">Download Dolly-0.2.1.dmg</a></strong> (1.3 MB), open it, and drag <strong>Dolly</strong> onto the Applications shortcut. If you launch it from Downloads instead, it offers to move itself.</li>
-              <li><strong>First launch:</strong> right-click the app → <strong>Open</strong> → Open. Once.</li>
-              <li><strong>Grant Screen Recording</strong> in System Settings → Privacy &amp; Security, then <strong>quit and reopen the app</strong> — macOS does not apply the grant to a running process.</li>
-              <li>Press <kbd>⌃⌘R</kbd> to record, <kbd>⌃⌘S</kbd> for a screenshot, <kbd>⌘R</kbd> for the Recordings window.</li>
-            </ol>
+        <section className="border-t border-line bg-ink text-ink-fg" id="install">
+          <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-20 md:grid-cols-[1fr_1fr] md:items-center">
             <div>
-              <div className="rounded-r-lg border-l-[3px] border-accent bg-card px-4 py-3 text-[15.5px] text-fg-2">Recordings and screenshots go to <code>~/Movies/Screen Recordings</code>. Uninstall by dragging the app to the Trash; your files stay.</div>
-              <p className="mt-4 text-[15.5px] text-fg-2">Source and releases are on <a href="https://github.com/rahulpatel84/dolly" className="underline decoration-accent underline-offset-2">GitHub</a>. Build it yourself with <code>build.sh --release</code>; the Install Guide and the full <a href="/guide" className="underline decoration-accent underline-offset-2">User Guide</a> are included inside the image.</p>
+              <h2 className="text-[34px] leading-tight">Install in a minute</h2>
+              <ol className="mt-6 space-y-3 text-[15px] text-ink-muted">
+                {["Download the disk image and drag Dolly to Applications.", "Open it; confirm once in Privacy & Security → Open Anyway.", "Grant Screen Recording when asked, then relaunch.", "Press ⌃⌘S for your first screenshot, ⌃⌘R to record."].map((s, i) => <li key={s} className="flex gap-3"><span className="font-mono text-ink-fg">{i + 1}.</span>{s}</li>)}
+              </ol>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href={DMG_URL} className="rounded-lg bg-ink-fg px-5 py-3 text-[15px] font-semibold text-ink">Download Dolly {VERSION}</a>
+                <Link href="/docs/install" className="rounded-lg border border-ink-muted/40 px-5 py-3 text-[15px] font-semibold">Step-by-step guide</Link>
+              </div>
             </div>
-          </div>
-        </section>
-
-        <section id="faq" className="border-t border-line py-16">
-          <h2 className="mb-6 text-[clamp(28px,3.4vw,40px)] font-semibold leading-[1.1]">Questions</h2>
-          <div className="border-b border-line">
-            {faq.map(([q, a], i) => (
-              <details key={q} open={i === 0} className="group border-t border-line py-3.5">
-                <summary className="flex cursor-pointer justify-between gap-3 font-display text-lg font-semibold after:font-mono after:text-accent after:content-['+'] group-open:after:content-['–']">{q}</summary>
-                <p className="mt-2.5 max-w-[62em] text-fg-2">{a}</p>
-              </details>
-            ))}
+            <Shot src="/shots/install-dmg.png" alt="The Dolly disk image in Finder" {...dim("install-dmg")} />
           </div>
         </section>
       </main>
-      <footer className="mx-auto flex max-w-[1120px] flex-wrap justify-between gap-4 border-t border-line px-5 py-9 text-[14.5px] text-fg-2">
-        <span>Dolly 0.2.1 · Developed by Rahul Patel</span><span>macOS 14 Sonoma or later</span>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
